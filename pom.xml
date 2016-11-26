@@ -9,7 +9,7 @@
     <version>2.11</version>
     <relativePath/>
   </parent>
-  <groupId>jenkins/.plugins</groupId>
+  <groupId>jenkins.plugins</groupId>
   <artifactId>teamup</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>hpi</packaging>

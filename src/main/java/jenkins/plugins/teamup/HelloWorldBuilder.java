@@ -1,4 +1,4 @@
-package jenkins/.plugins.teamup;
+package jenkins.plugins.teamup;
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.FilePath;
