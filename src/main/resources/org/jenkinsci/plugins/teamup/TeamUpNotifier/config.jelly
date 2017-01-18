@@ -1,0 +1,63 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout"
+         xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:c="/lib/credentials">
+         
+    <f:entry title="TeamUp Romm ID">
+        <f:textbox name="teamupRoom" value="${instance.getConfig().getRoom()}"/>
+    </f:entry>
+    
+    <f:entry title="Notify Build Start">
+        <f:checkbox name="teamupStartNotification" value="true" checked="${instance.getConfig().isStartNotification()}"/>
+    </f:entry>
+
+    <f:entry title="Notify Aborted">
+        <f:checkbox name="teamupNotifyAborted" value="true" checked="${instance.getConfig().isNotifyAborted()}"/>
+    </f:entry>
+
+    <f:entry title="Notify Failure">
+        <f:checkbox name="teamupNotifyFailure" value="true" checked="${instance.getConfig().isNotifyFailure()}"/>
+    </f:entry>
+
+    <f:entry title="Notify Not Built">
+        <f:checkbox name="teamupNotifyNotBuilt" value="true" checked="${instance.getConfig().isNotifyNotBuilt()}"/>
+    </f:entry>
+
+    <f:entry title="Notify Success">
+        <f:checkbox name="teamupNotifySuccess" value="true" checked="${instance.getConfig().isNotifySuccess()}"/>
+    </f:entry>
+
+    <f:entry title="Notify Unstable">
+        <f:checkbox name="teamupNotifyUnstable" value="true" checked="${instance.getConfig().isNotifyUnstable()}"/>
+    </f:entry>
+
+    <f:entry title="Notify Back To Normal">
+        <f:checkbox name="teamupNotifyBackToNormal" value="true" checked="${instance.getConfig().isNotifyBackToNormal()}"/>
+    </f:entry>
+
+    <f:advanced>
+        <f:entry title="Notify Repeated Failure">
+            <f:checkbox name="teamupNotifyRepeatedFailure" value="true"
+                        checked="${instance.getConfig().isNotifyRepeatedFailure()}"/>
+        </f:entry>
+        <f:entry title="Include Test Summary">
+            <f:checkbox name="includeTestSummary" value="true" checked="${instance.getConfig().isIncludeTestSummary()}"/>
+        </f:entry>
+
+        <f:optionalBlock name="includeCustomMessage" title="Include Custom Message" checked="${instance.getConfig().isIncludeCustomMessage()}">
+            <f:entry title="Custom Message">
+                <f:textarea name="customMessage" value="${instance.getConfig().getCustomMessage()}"/>
+            </f:entry>
+        </f:optionalBlock>
+
+        <f:entry title="Notification message includes" description="What commit information to include into notification message">
+            <select class="setting-input" name="teamupCommitInfoChoice">
+                <j:forEach var="i" items="${descriptor.COMMIT_INFO_CHOICES}">
+                    <f:option selected="${instance.getConfig().getCommitInfoChoice()==i}">${i.getDisplayName()}</f:option>
+                </j:forEach>
+            </select>
+        </f:entry>
+        <f:validateButton
+                title="${%Test Connection}" progress="${%Testing...}"
+                method="testConnection" with="teamupRoom"/>
+    </f:advanced>
+</j:jelly>

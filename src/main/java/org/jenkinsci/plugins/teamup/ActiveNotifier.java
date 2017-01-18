@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.teamup;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.EnvVars;
 import hudson.Util;
 import hudson.model.*;
@@ -9,8 +10,10 @@ import hudson.scm.ChangeLogSet.Entry;
 import hudson.tasks.test.AbstractTestResultAction;
 import hudson.triggers.SCMTrigger;
 import hudson.util.LogTaskListener;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.plugins.displayurlapi.DisplayURLProvider;
+import org.jenkinsci.plugins.teamup.enums.Level;
 
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -22,22 +25,23 @@ import java.util.regex.Pattern;
 import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.SEVERE;
 
+@SuppressFBWarnings({"NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE", "DLS_DEAD_LOCAL_STORE"})
 @SuppressWarnings("rawtypes")
 public class ActiveNotifier implements FineGrainedNotifier {
 
-    private static final Logger logger = Logger.getLogger(SlackListener.class.getName());
+    private static final Logger logger = Logger.getLogger(TeamUpListener.class.getName());
 
-    SlackNotifier notifier;
+    TeamUpNotifier notifier;
     BuildListener listener;
 
-    public ActiveNotifier(SlackNotifier notifier, BuildListener listener) {
+    public ActiveNotifier(TeamUpNotifier notifier, BuildListener listener) {
         super();
         this.notifier = notifier;
         this.listener = listener;
     }
 
-    private SlackService getSlack(AbstractBuild r) {
-        return notifier.newSlackService(r, listener);
+    private TeamUpService getTeamUpService(AbstractBuild r) {
+        return notifier.getTeamUpService(r, listener);
     }
 
     public void deleted(AbstractBuild r) {
@@ -60,22 +64,22 @@ public class ActiveNotifier implements FineGrainedNotifier {
             }
         }
 
-        String changes = getChanges(build, notifier.includeCustomMessage());
-        if (changes != null) {
-            notifyStart(build, changes);
-        } else {
-            notifyStart(build, getBuildStatusMessage(build, false, notifier.includeCustomMessage()));
+        String message = getChanges(build, notifier.getConfig().isIncludeCustomMessage());
+        if(message == null){
+            message = getBuildStatusMessage(build, false, notifier.getConfig().isIncludeCustomMessage());
         }
+        notifyStart(build, message);        
     }
 
     private void notifyStart(AbstractBuild build, String message) {
         AbstractProject<?, ?> project = build.getProject();
         AbstractBuild<?, ?> previousBuild = project.getLastBuild().getPreviousCompletedBuild();
-        if (previousBuild == null) {
-            getSlack(build).publish(message, "good");
-        } else {
-            getSlack(build).publish(message, getBuildColor(previousBuild));
+        Level level = Level.GOOD;
+        if (previousBuild != null) {
+            level = getBuildColor(previousBuild);
         }
+        
+        getTeamUpService(build).send(notifier.getConfig().getRoom(), message, level);       
     }
 
     public void finalized(AbstractBuild r) {
@@ -89,23 +93,23 @@ public class ActiveNotifier implements FineGrainedNotifier {
             previousBuild = previousBuild.getPreviousCompletedBuild();
         } while (previousBuild != null && previousBuild.getResult() == Result.ABORTED);
         Result previousResult = (previousBuild != null) ? previousBuild.getResult() : Result.SUCCESS;
-        if ((result == Result.ABORTED && notifier.getNotifyAborted())
+        if ((result == Result.ABORTED && notifier.getConfig().isNotifyAborted())
                 || (result == Result.FAILURE //notify only on single failed build
                     && previousResult != Result.FAILURE
-                    && notifier.getNotifyFailure())
+                    && notifier.getConfig().isNotifyFailure())
                 || (result == Result.FAILURE //notify only on repeated failures
                     && previousResult == Result.FAILURE
-                    && notifier.getNotifyRepeatedFailure())
-                || (result == Result.NOT_BUILT && notifier.getNotifyNotBuilt())
+                    && notifier.getConfig().isNotifyRepeatedFailure())
+                || (result == Result.NOT_BUILT && notifier.getConfig().isNotifyNotBuilt())
                 || (result == Result.SUCCESS
                     && (previousResult == Result.FAILURE || previousResult == Result.UNSTABLE)
-                    && notifier.getNotifyBackToNormal())
-                || (result == Result.SUCCESS && notifier.getNotifySuccess())
-                || (result == Result.UNSTABLE && notifier.getNotifyUnstable())) {
-            getSlack(r).publish(getBuildStatusMessage(r, notifier.includeTestSummary(),
-                    notifier.includeCustomMessage()), getBuildColor(r));
-            if (notifier.getCommitInfoChoice().showAnything()) {
-                getSlack(r).publish(getCommitList(r), getBuildColor(r));
+                    && notifier.getConfig().isNotifyBackToNormal())
+                || (result == Result.SUCCESS && notifier.getConfig().isNotifySuccess())
+                || (result == Result.UNSTABLE && notifier.getConfig().isNotifyUnstable())) {
+            getTeamUpService(r).send(notifier.getConfig().getRoom(), getBuildStatusMessage(r, notifier.getConfig().isIncludeTestSummary(),
+                    notifier.getConfig().isIncludeCustomMessage()), getBuildColor(r));
+            if (notifier.getConfig().getCommitInfoChoice().showAnything()) {
+                getTeamUpService(r).send(notifier.getConfig().getRoom(), getCommitList(r), getBuildColor(r));
             }
         }
     }
@@ -161,14 +165,14 @@ public class ActiveNotifier implements FineGrainedNotifier {
             }
             String upProjectName = c.getUpstreamProject();
             int buildNumber = c.getUpstreamBuild();
-            AbstractProject project = Hudson.getInstance().getItemByFullName(upProjectName, AbstractProject.class);
-            AbstractBuild upBuild = (AbstractBuild)project.getBuildByNumber(buildNumber);
+            AbstractProject project = Jenkins.getInstance().getItemByFullName(upProjectName, AbstractProject.class);
+            AbstractBuild upBuild = project.getBuildByNumber(buildNumber);
             return getCommitList(upBuild);
         }
         Set<String> commits = new HashSet<String>();
         for (Entry entry : entries) {
             StringBuffer commit = new StringBuffer();
-            CommitInfoChoice commitInfoChoice = notifier.getCommitInfoChoice();
+            CommitInfoChoice commitInfoChoice = notifier.getConfig().getCommitInfoChoice();
             if (commitInfoChoice.showTitle()) {
                 commit.append(entry.getMsg());
             }
@@ -183,14 +187,14 @@ public class ActiveNotifier implements FineGrainedNotifier {
         return message.toString();
     }
 
-    static String getBuildColor(AbstractBuild r) {
+    static Level getBuildColor(AbstractBuild r) {
         Result result = r.getResult();
         if (result == Result.SUCCESS) {
-            return "good";
+            return Level.GOOD;
         } else if (result == Result.FAILURE) {
-            return "danger";
+            return Level.DANGER;
         } else {
-            return "warning";
+            return Level.WARN;
         }
     }
 
@@ -223,10 +227,10 @@ public class ActiveNotifier implements FineGrainedNotifier {
                                     UNKNOWN_STATUS_MESSAGE = "Unknown";
         
         private StringBuffer message;
-        private SlackNotifier notifier;
+        private TeamUpNotifier notifier;
         private AbstractBuild build;
 
-        public MessageBuilder(SlackNotifier notifier, AbstractBuild build) {
+        public MessageBuilder(TeamUpNotifier notifier, AbstractBuild build) {
             this.notifier = notifier;
             this.message = new StringBuffer();
             this.build = build;
@@ -353,7 +357,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         }
 
         public MessageBuilder appendCustomMessage() {
-            String customMessage = notifier.getCustomMessage();
+            String customMessage = notifier.getConfig().getCustomMessage();
             EnvVars envVars = new EnvVars();
             try {
                 envVars = build.getEnvironment(new LogTaskListener(logger, INFO));
