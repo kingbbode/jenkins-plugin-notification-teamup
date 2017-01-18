@@ -46,6 +46,8 @@ mvn install
 
 ### 3. Global Config 등록
 
+젠킨스 관리 > 시스템 설정
+
 ![업로드](/images/global_config.png)
 
 -	발급받은 `Client ID`와 `Client Secret` 작성
@@ -57,13 +59,13 @@ mvn install
 
 ### 4. 빌드 후 조치 추가
 
+특정 아이템의 빌드 후 조치로 추가합니다.
+
 ![추가](/images/add.png)
 
-특정 아이템의 빌드 후 조치로 추가 후
+원하는 설정 체크를 합니다.
 
 ![추가](/images/config.png)
-
-원하는 설정 체크를 합니다.
 
 -	Room ID : 팀업 방 번호
 
