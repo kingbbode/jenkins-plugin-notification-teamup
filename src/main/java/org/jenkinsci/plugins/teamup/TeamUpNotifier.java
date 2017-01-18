@@ -44,8 +44,6 @@ public class TeamUpNotifier extends Notifier {
     private static final Logger logger = Logger.getLogger(TeamUpNotifier.class.getName());
 
     private TeamUpConfig teamUpConfig;
-    
-    private static final String TEST_MESSAGE_GROUP = "70367";
 
     @Override
     public DescriptorImpl getDescriptor() {
@@ -183,7 +181,8 @@ public class TeamUpNotifier extends Notifier {
         public FormValidation doGlobalTestConnection(@QueryParameter("teamupClientId") final String teamupClientId,
                                                      @QueryParameter("teamupClientSecret") final String teamupClientSecret,
                                                      @QueryParameter("teamupUserId") final String teamupUserId,
-                                                     @QueryParameter("teamupUserPassword") final String teamupUserPassword) throws FormException {
+                                                     @QueryParameter("teamupUserPassword") final String teamupUserPassword,
+                                                     @QueryParameter("teamupTestRoom") final String testRoom) throws FormException {
             try {
                 if (StringUtils.isEmpty(teamupClientId)) {
                     return FormValidation.error("ClientId is null");
@@ -199,7 +198,7 @@ public class TeamUpNotifier extends Notifier {
                 }
                 TeamUpService testTeamUpServiceService = new TeamUpService(new TeamUpGlobalConfig(teamupClientId, teamupClientSecret, teamupUserId, teamupUserPassword));
                 String message = "TeamUP/Jenkins plugin: you're all set on " + DisplayURLProvider.get().getRoot();
-                boolean success = testTeamUpServiceService.send(TEST_MESSAGE_GROUP, message, Level.GOOD);
+                boolean success = testTeamUpServiceService.send(testRoom, message, Level.GOOD);
                 return success ? FormValidation.ok("Success") : FormValidation.error("Failure");
             } catch (Exception e) {
                 return FormValidation.error("Client error : " + e.getMessage());
