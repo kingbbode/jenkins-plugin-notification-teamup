@@ -8,6 +8,11 @@ import hudson.tasks.Publisher;
 import java.util.Map;
 import java.util.logging.Logger;
 
+
+/**
+ * Created by YG on 2017-01-18.
+ */
+
 @Extension
 @SuppressWarnings("rawtypes")
 public class TeamUpListener extends RunListener<AbstractBuild> {

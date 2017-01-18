@@ -18,6 +18,7 @@ import org.apache.http.util.EntityUtils;
 import org.jenkinsci.plugins.teamup.enums.Level;
 import org.jenkinsci.plugins.teamup.vo.*;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -51,7 +52,7 @@ public class TeamUpService {
 
     public boolean send(String room, String contents, Level level) {
         try {
-            Message message = new Message(contents);
+            Message message = new Message(level.getMessage() + contents);
             String param = new Gson().toJson(message);
             HttpPost post = new HttpPost(MESSAGE_URL + room);
             String accessToken = getAccessToken();
@@ -60,7 +61,7 @@ public class TeamUpService {
             }
             post.addHeader("Authorization", accessToken);
             post.addHeader("Content-Type", "application/json");
-            post.setEntity(new StringEntity(param));
+            post.setEntity(new StringEntity(param, Charset.forName("UTF-8")));
 
             CloseableHttpClient client = HttpClientBuilder.create().build();
 

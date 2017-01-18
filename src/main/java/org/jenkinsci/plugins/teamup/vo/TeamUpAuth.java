@@ -1,5 +1,7 @@
 package org.jenkinsci.plugins.teamup.vo;
-
+/**
+ * Created by YG on 2017-01-18.
+ */
 public class TeamUpAuth {
 	
 	public TeamUpAuth(String grant_type, TeamUpGlobalConfig teamUpGlobalConfig){
