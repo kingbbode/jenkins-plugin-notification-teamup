@@ -35,6 +35,10 @@ import java.util.logging.Logger;
 
 import static com.cloudbees.plugins.credentials.CredentialsProvider.lookupCredentials;
 
+/**
+ * Created by YG on 2017-01-18.
+ */
+
 public class TeamUpNotifier extends Notifier {
 
     private static final Logger logger = Logger.getLogger(TeamUpNotifier.class.getName());

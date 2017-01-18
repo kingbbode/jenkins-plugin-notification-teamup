@@ -3,7 +3,9 @@ package org.jenkinsci.plugins.teamup.vo;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.util.Date;
-
+/**
+ * Created by YG on 2017-01-18.
+ */
 @SuppressFBWarnings("ICAST_INT_2_LONG_AS_INSTANT")
 public class OAuth2Token {
 	

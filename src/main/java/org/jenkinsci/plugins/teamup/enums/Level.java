@@ -8,9 +8,13 @@ public enum Level {
     DANGER("위험"),
     WARN("경고");
 
-    private String level;
+    private String message;
 
-    Level(String level) {
-        this.level = level;
+    Level(String message) {
+        this.message = message;
+    }
+
+    public String getMessage() {
+        return "[" + message + "]\n";
     }
 }
