@@ -8,13 +8,18 @@ import hudson.tasks.Publisher;
 import java.util.Map;
 import java.util.logging.Logger;
 
+
+/**
+ * Created by YG on 2017-01-18.
+ */
+
 @Extension
 @SuppressWarnings("rawtypes")
-public class SlackListener extends RunListener<AbstractBuild> {
+public class TeamUpListener extends RunListener<AbstractBuild> {
 
-    private static final Logger logger = Logger.getLogger(SlackListener.class.getName());
+    private static final Logger logger = Logger.getLogger(TeamUpListener.class.getName());
 
-    public SlackListener() {
+    public TeamUpListener() {
         super(AbstractBuild.class);
     }
 
@@ -46,8 +51,8 @@ public class SlackListener extends RunListener<AbstractBuild> {
     FineGrainedNotifier getNotifier(AbstractProject project, TaskListener listener) {
         Map<Descriptor<Publisher>, Publisher> map = project.getPublishersList().toMap();
         for (Publisher publisher : map.values()) {
-            if (publisher instanceof SlackNotifier) {
-                return new ActiveNotifier((SlackNotifier) publisher, (BuildListener)listener);
+            if (publisher instanceof TeamUpNotifier) {
+                return new ActiveNotifier((TeamUpNotifier) publisher, (BuildListener)listener);
             }
         }
         return new DisabledNotifier();
