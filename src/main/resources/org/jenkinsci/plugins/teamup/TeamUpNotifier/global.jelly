@@ -25,9 +25,12 @@
     <f:entry title="TeamUP User Password">
         <f:textbox field="userPassword" name="teamupUserPassword" value="${descriptor.getConfig().getUserPassword()}" />
     </f:entry>
+    <f:entry title="TeamUP User Password">
+        <f:textbox field="testRoom" name="teamupTestRoom" value="" />
+    </f:entry>
         
     <f:validateButton
         title="${%Test Connection}" progress="${%Testing...}"
-        method="globalTestConnection" with="teamupClientId,teamupClientSecret,teamupUserId,teamupUserPassword" />
+        method="globalTestConnection" with="teamupClientId,teamupClientSecret,teamupUserId,teamupUserPassword,teamupTestRoom" />
   </f:section>
 </j:jelly>

@@ -76,7 +76,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         AbstractBuild<?, ?> previousBuild = project.getLastBuild().getPreviousCompletedBuild();
         Level level = Level.GOOD;
         if (previousBuild != null) {
-            level = getBuildColor(previousBuild);
+            level = getBuildLevel(previousBuild);
         }
         
         getTeamUpService(build).send(notifier.getConfig().getRoom(), message, level);       
@@ -107,9 +107,9 @@ public class ActiveNotifier implements FineGrainedNotifier {
                 || (result == Result.SUCCESS && notifier.getConfig().isNotifySuccess())
                 || (result == Result.UNSTABLE && notifier.getConfig().isNotifyUnstable())) {
             getTeamUpService(r).send(notifier.getConfig().getRoom(), getBuildStatusMessage(r, notifier.getConfig().isIncludeTestSummary(),
-                    notifier.getConfig().isIncludeCustomMessage()), getBuildColor(r));
+                    notifier.getConfig().isIncludeCustomMessage()), getBuildLevel(r));
             if (notifier.getConfig().getCommitInfoChoice().showAnything()) {
-                getTeamUpService(r).send(notifier.getConfig().getRoom(), getCommitList(r), getBuildColor(r));
+                getTeamUpService(r).send(notifier.getConfig().getRoom(), getCommitList(r), getBuildLevel(r));
             }
         }
     }
@@ -137,9 +137,9 @@ public class ActiveNotifier implements FineGrainedNotifier {
             authors.add(entry.getAuthor().getDisplayName());
         }
         MessageBuilder message = new MessageBuilder(notifier, r);
-        message.append("Started by changes from ");
+        message.append("\nStarted by changes from ");
         message.append(StringUtils.join(authors, ", "));
-        message.append(" (");
+        message.append("\n(");
         message.append(files.size());
         message.append(" file(s) changed)");
         message.appendOpenLink();
@@ -187,7 +187,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         return message.toString();
     }
 
-    static Level getBuildColor(AbstractBuild r) {
+    static Level getBuildLevel(AbstractBuild r) {
         Result result = r.getResult();
         if (result == Result.SUCCESS) {
             return Level.GOOD;
@@ -323,7 +323,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
         public MessageBuilder appendOpenLink() {
             String url = DisplayURLProvider.get().getRunURL(build);
-            message.append(" (<").append(url).append("|Open>)");
+            message.append("\n(").append(url).append(")");
             return this;
         }
 
