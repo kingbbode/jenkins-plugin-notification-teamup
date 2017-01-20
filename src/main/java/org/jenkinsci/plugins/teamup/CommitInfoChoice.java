@@ -1,9 +1,9 @@
 package org.jenkinsci.plugins.teamup;
 
 public enum CommitInfoChoice {
-    NONE("nothing about commits",                             false, false),
-    AUTHORS("commit list with authors only",                  true,  false),
-    AUTHORS_AND_TITLES("commit list with authors and titles", true,  true);
+    NONE("커밋 정보를 표기하지 않습니다.",                             false, false),
+    AUTHORS("커밋 사용자를 표기합니다.",                  true,  false),
+    AUTHORS_AND_TITLES("커밋 메시지와 사용자를 표기합니다.", true,  true);
 
     private final String displayName;
     private boolean showAuthor;

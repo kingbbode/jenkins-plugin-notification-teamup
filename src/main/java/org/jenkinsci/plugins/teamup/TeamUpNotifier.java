@@ -183,36 +183,39 @@ public class TeamUpNotifier extends Notifier {
                                                      @QueryParameter("teamupUserId") final String teamupUserId,
                                                      @QueryParameter("teamupUserPassword") final String teamupUserPassword,
                                                      @QueryParameter("teamupTestRoom") final String testRoom) throws FormException {
-            try {
+           
                 if (StringUtils.isEmpty(teamupClientId)) {
-                    return FormValidation.error("ClientId is null");
+                    return FormValidation.error("ClientId 를 입력해주세요.");
                 }
                 if (StringUtils.isEmpty(teamupClientSecret)) {
-                    return FormValidation.error("ClientSecret is null");
+                    return FormValidation.error("ClientSecret 를 입력해주세요.");
                 }
                 if (StringUtils.isEmpty(teamupUserId)) {
-                    return FormValidation.error("User Id is null");
+                    return FormValidation.error("User Id 를 입력해주세요.");
                 }
                 if (StringUtils.isEmpty(teamupUserPassword)) {
-                    return FormValidation.error("User Password is null");
+                    return FormValidation.error("User Password 를 입력해주세요.");
                 }
-                TeamUpService testTeamUpServiceService = new TeamUpService(new TeamUpGlobalConfig(teamupClientId, teamupClientSecret, teamupUserId, teamupUserPassword));
-                String message = "TeamUP/Jenkins plugin: you're all set on " + DisplayURLProvider.get().getRoot();
-                boolean success = testTeamUpServiceService.send(testRoom, message, Level.GOOD);
-                return success ? FormValidation.ok("Success") : FormValidation.error("Failure");
-            } catch (Exception e) {
-                return FormValidation.error("Client error : " + e.getMessage());
-            }
+            
+                if (StringUtils.isEmpty(testRoom)) {
+                    return FormValidation.error("방번호를 입력해주세요.");
+                }
+                return sendTest(new TeamUpService(new TeamUpGlobalConfig(teamupClientId, teamupClientSecret, teamupUserId, teamupUserPassword)), testRoom);
         }
 
         public FormValidation doTestConnection(@QueryParameter("teamupRoom") final String teamupRoom) throws FormException {
-            try {
+            
                 if (StringUtils.isEmpty(teamupRoom)) {
-                    return FormValidation.error("room is null");
+                    return FormValidation.error("방 번호를 입력해주세요.");
                 }
-                String message = "TeamUP/Jenkins plugin: you're all set on " + DisplayURLProvider.get().getRoot();
-                boolean success = this.teamUpService.send(teamupRoom, message, Level.GOOD);
-                return success ? FormValidation.ok("Success") : FormValidation.error("Failure");
+                return sendTest(this.teamUpService, teamupRoom);
+        }
+        
+        private FormValidation sendTest(TeamUpService teamUpService, String teamupRoom){
+            try {
+                String message = "[TeamUP plugin for Jenkins]\n연동 테스트 메시지입니다.\n(" + DisplayURLProvider.get().getRoot() +")";
+                boolean success = teamUpService.send(teamupRoom, message, Level.GOOD);
+                return success ? FormValidation.ok("성공") : FormValidation.error("실패");
             } catch (Exception e) {
                 return FormValidation.error("Client error : " + e.getMessage());
             }
