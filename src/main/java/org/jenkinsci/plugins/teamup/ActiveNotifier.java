@@ -183,7 +183,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
             commits.add(commit.toString());
         }
         MessageBuilder message = new MessageBuilder(notifier, r);
-        message.append("\n변경내역:\n- ");
+        message.append("\n커밋 정보\n- ");
         message.append(StringUtils.join(commits, "\n- "));
         return message.toString();
     }
