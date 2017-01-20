@@ -140,7 +140,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         message.append("님의 변동사항이 빌드 시작되었습니다.");
         message.append("\n(");
         message.append(files.size());
-        message.append(" file(s) changed)");
+        message.append(" 개의 파일 수정)");
         message.append("\n");
         message.appendOpenLink();
         if (includeCustomMessage) {
@@ -183,7 +183,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
             commits.add(commit.toString());
         }
         MessageBuilder message = new MessageBuilder(notifier, r);
-        message.append("Changes:\n- ");
+        message.append("\n변경내역:\n- ");
         message.append(StringUtils.join(commits, "\n- "));
         return message.toString();
     }
@@ -329,12 +329,12 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
         public MessageBuilder appendOpenLink() {
             String url = DisplayURLProvider.get().getRunURL(build);
-            message.append("\n(").append(url).append(")");
+            message.append("(").append(url).append(")");
             return this;
         }
 
         public MessageBuilder appendDuration() {
-            message.append(" after ");
+            message.append("(소요시간 : ");
             String durationString;
             if(message.toString().contains(BACK_TO_NORMAL_STATUS_MESSAGE)){
                 durationString = createBackToNormalDurationString();
@@ -342,6 +342,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
                 durationString = build.getDurationString();
             }
             message.append(durationString);
+            message.append(" )");
             return this;
         }
 
@@ -352,10 +353,10 @@ public class ActiveNotifier implements FineGrainedNotifier {
                 int total = action.getTotalCount();
                 int failed = action.getFailCount();
                 int skipped = action.getSkipCount();
-                message.append("\n테스트 결과:\n");
-                message.append("\n\tPassed: " + (total - failed - skipped));
-                message.append("\n\tFailed: " + failed);
-                message.append("\n\tSkipped: " + skipped);
+                message.append("\n테스트 결과\n");
+                message.append("\nPassed: " + (total - failed - skipped));
+                message.append("\nFailed: " + failed);
+                message.append("\nSkipped: " + skipped);
             } else {
                 message.append("\n테스트가 없습니다.");
             }
