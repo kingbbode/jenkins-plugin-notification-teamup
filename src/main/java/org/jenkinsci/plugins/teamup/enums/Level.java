@@ -20,7 +20,7 @@ public enum Level {
     
 
     public String getMessage() {
-        return "[" + message + "]\n";
+        return "[" + message + "] ";
     }
     
     public Level getBeforeLevel(){
