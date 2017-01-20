@@ -52,7 +52,7 @@ public class TeamUpService {
 
     public boolean send(String room, String contents, Level level) {
         try {
-            Message message = new Message(level.getMessage() + contents);
+            Message message = new Message((level!=null?level.getMessage():"") + contents);
             String param = new Gson().toJson(message);
             HttpPost post = new HttpPost(MESSAGE_URL + room);
             String accessToken = getAccessToken();

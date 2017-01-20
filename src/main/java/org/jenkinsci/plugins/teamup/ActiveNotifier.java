@@ -48,16 +48,14 @@ public class ActiveNotifier implements FineGrainedNotifier {
     }
 
     public void started(AbstractBuild build) {
-
-        AbstractProject<?, ?> project = build.getProject();
-
         CauseAction causeAction = build.getAction(CauseAction.class);
-
         if (causeAction != null) {
             Cause scmCause = causeAction.findCause(SCMTrigger.SCMTriggerCause.class);
             if (scmCause == null) {
                 MessageBuilder message = new MessageBuilder(notifier, build);
-                message.append(causeAction.getShortDescription());
+                for(Cause cause : causeAction.getCauses()){
+                    message.append(cause.getShortDescription() + ". ");
+                }
                 notifyStart(build, message.appendOpenLink().toString());
                 // Cause was found, exit early to prevent double-message
                 return;
@@ -74,9 +72,9 @@ public class ActiveNotifier implements FineGrainedNotifier {
     private void notifyStart(AbstractBuild build, String message) {
         AbstractProject<?, ?> project = build.getProject();
         AbstractBuild<?, ?> previousBuild = project.getLastBuild().getPreviousCompletedBuild();
-        Level level = Level.GOOD;
+        Level level = null;
         if (previousBuild != null) {
-            level = getBuildLevel(previousBuild);
+            level = getBuildLevel(previousBuild).getBeforeLevel();
         }
         
         getTeamUpService(build).send(notifier.getConfig().getRoom(), message, level);       
@@ -137,13 +135,16 @@ public class ActiveNotifier implements FineGrainedNotifier {
             authors.add(entry.getAuthor().getDisplayName());
         }
         MessageBuilder message = new MessageBuilder(notifier, r);
-        message.append("\nStarted by changes from ");
+        message.append("\n");
         message.append(StringUtils.join(authors, ", "));
+        message.append("님의 변동사항이 빌드 시작되었습니다.");
         message.append("\n(");
         message.append(files.size());
-        message.append(" file(s) changed)");
+        message.append(" 개의 파일 수정)");
+        message.append("\n");
         message.appendOpenLink();
         if (includeCustomMessage) {
+            message.append("\n");
             message.appendCustomMessage();
         }
         return message.toString();
@@ -161,7 +162,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
             logger.info("Empty change...");
             Cause.UpstreamCause c = (Cause.UpstreamCause)r.getCause(Cause.UpstreamCause.class);
             if (c == null) {
-                return "No Changes.";
+                return "변경내역이 없습니다.";
             }
             String upProjectName = c.getUpstreamProject();
             int buildNumber = c.getUpstreamBuild();
@@ -182,7 +183,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
             commits.add(commit.toString());
         }
         MessageBuilder message = new MessageBuilder(notifier, r);
-        message.append("Changes:\n- ");
+        message.append("\n커밋 정보\n- ");
         message.append(StringUtils.join(commits, "\n- "));
         return message.toString();
     }
@@ -200,13 +201,18 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
     String getBuildStatusMessage(AbstractBuild r, boolean includeTestSummary, boolean includeCustomMessage) {
         MessageBuilder message = new MessageBuilder(notifier, r);
+        message.append("\n");
         message.appendStatusMessage();
+        message.append("\n");
         message.appendDuration();
+        message.append("\n");
         message.appendOpenLink();
         if (includeTestSummary) {
+            message.append("\n");
             message.appendTestSummary();
         }
         if (includeCustomMessage) {
+            message.append("\n");
             message.appendCustomMessage();
         }
         return message.toString();
@@ -216,11 +222,11 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
         private static final Pattern aTag = Pattern.compile("(?i)<a([^>]+)>(.+?)</a>");
         private static final Pattern href = Pattern.compile("\\s*(?i)href\\s*=\\s*(\"([^\"]*\")|'[^']*'|([^'\">\\s]+))");
-        private static final String STARTING_STATUS_MESSAGE = "Starting...",
-                                    BACK_TO_NORMAL_STATUS_MESSAGE = "Back to normal",
-                                    STILL_FAILING_STATUS_MESSAGE = "Still Failing",
-                                    SUCCESS_STATUS_MESSAGE = "Success",
-                                    FAILURE_STATUS_MESSAGE = "Failure",
+        private static final String STARTING_STATUS_MESSAGE = "빌드가 시작되었습니다.",
+                                    BACK_TO_NORMAL_STATUS_MESSAGE = "이전에 실패했던 빌드가 정상적으로 빌드 되었습니다.",
+                                    STILL_FAILING_STATUS_MESSAGE = "여전히 빌드가 실패하고 있습니다.",
+                                    SUCCESS_STATUS_MESSAGE = "빌드가 성공했습니다.",
+                                    FAILURE_STATUS_MESSAGE = "빌드가 실패했습니다.",
                                     ABORTED_STATUS_MESSAGE = "Aborted",
                                     NOT_BUILT_STATUS_MESSAGE = "Not built",
                                     UNSTABLE_STATUS_MESSAGE = "Unstable",
@@ -323,12 +329,12 @@ public class ActiveNotifier implements FineGrainedNotifier {
 
         public MessageBuilder appendOpenLink() {
             String url = DisplayURLProvider.get().getRunURL(build);
-            message.append("\n(").append(url).append(")");
+            message.append("(").append(url).append(")");
             return this;
         }
 
         public MessageBuilder appendDuration() {
-            message.append(" after ");
+            message.append("(소요시간 : ");
             String durationString;
             if(message.toString().contains(BACK_TO_NORMAL_STATUS_MESSAGE)){
                 durationString = createBackToNormalDurationString();
@@ -336,6 +342,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
                 durationString = build.getDurationString();
             }
             message.append(durationString);
+            message.append(" )");
             return this;
         }
 
@@ -346,12 +353,12 @@ public class ActiveNotifier implements FineGrainedNotifier {
                 int total = action.getTotalCount();
                 int failed = action.getFailCount();
                 int skipped = action.getSkipCount();
-                message.append("\nTest Status:\n");
-                message.append("\tPassed: " + (total - failed - skipped));
-                message.append(", Failed: " + failed);
-                message.append(", Skipped: " + skipped);
+                message.append("\n테스트 결과\n");
+                message.append("\nPassed: " + (total - failed - skipped));
+                message.append("\nFailed: " + failed);
+                message.append("\nSkipped: " + skipped);
             } else {
-                message.append("\nNo Tests found.");
+                message.append("\n테스트가 없습니다.");
             }
             return this;
         }
