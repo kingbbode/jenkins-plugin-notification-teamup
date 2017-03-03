@@ -70,6 +70,14 @@ public class ActiveNotifier implements FineGrainedNotifier {
     }
 
     private void notifyStart(AbstractBuild build, String message) {
+        EnvVars envVars = new EnvVars();
+        try {
+            envVars = build.getEnvironment(new LogTaskListener(logger, INFO));
+        } catch (IOException e) {
+            logger.log(SEVERE, e.getMessage(), e);
+        } catch (InterruptedException e) {
+            logger.log(SEVERE, e.getMessage(), e);
+        }
         AbstractProject<?, ?> project = build.getProject();
         AbstractBuild<?, ?> previousBuild = project.getLastBuild().getPreviousCompletedBuild();
         Level level = null;
@@ -77,13 +85,21 @@ public class ActiveNotifier implements FineGrainedNotifier {
             level = getBuildLevel(previousBuild).getBeforeLevel();
         }
         
-        getTeamUpService(build).send(notifier.getConfig().getRoom(), message, level);       
+        getTeamUpService(build).send(envVars.expand(notifier.getConfig().getRoom()), message, level);       
     }
 
     public void finalized(AbstractBuild r) {
     }
 
     public void completed(AbstractBuild r) {
+        EnvVars envVars = new EnvVars();
+        try {
+            envVars = r.getEnvironment(new LogTaskListener(logger, INFO));
+        } catch (IOException e) {
+            logger.log(SEVERE, e.getMessage(), e);
+        } catch (InterruptedException e) {
+            logger.log(SEVERE, e.getMessage(), e);
+        }
         AbstractProject<?, ?> project = r.getProject();
         Result result = r.getResult();
         AbstractBuild<?, ?> previousBuild = project.getLastBuild();
@@ -104,10 +120,10 @@ public class ActiveNotifier implements FineGrainedNotifier {
                     && notifier.getConfig().isNotifyBackToNormal())
                 || (result == Result.SUCCESS && notifier.getConfig().isNotifySuccess())
                 || (result == Result.UNSTABLE && notifier.getConfig().isNotifyUnstable())) {
-            getTeamUpService(r).send(notifier.getConfig().getRoom(), getBuildStatusMessage(r, notifier.getConfig().isIncludeTestSummary(),
+            getTeamUpService(r).send(envVars.expand(notifier.getConfig().getRoom()), getBuildStatusMessage(r, notifier.getConfig().isIncludeTestSummary(),
                     notifier.getConfig().isIncludeCustomMessage()), getBuildLevel(r));
             if (notifier.getConfig().getCommitInfoChoice().showAnything()) {
-                getTeamUpService(r).send(notifier.getConfig().getRoom(), getCommitList(r), getBuildLevel(r));
+                getTeamUpService(r).send(envVars.expand(notifier.getConfig().getRoom()), getCommitList(r), getBuildLevel(r));
             }
         }
     }
